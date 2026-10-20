@@ -47,7 +47,8 @@ protected:
   uint32_t translateSystemKeyCode(int systemKeyCode);
   unsigned getSystemKeyCode(const NSEvent* nsevent);
 
-  uint32_t translateToKeySym(unsigned keyCode, unsigned modifierFlags);
+  uint32_t translateToKeySym(unsigned keyCode, unsigned modifierFlags,
+                             bool latin=false);
 
   int openHID(unsigned int* ioc);
   int getModifierLockState(int modifier, bool* on);

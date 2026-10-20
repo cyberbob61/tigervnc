@@ -40,6 +40,7 @@ public:
   void connect(const char* vncServerName, network::Socket* sock=nullptr);
 
   std::string connectionInfo();
+  std::string serverAddress();
 
   unsigned getUpdateCount();
   unsigned getPixelCount();

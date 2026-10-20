@@ -21,12 +21,12 @@
 
 #include <FL/Fl_Window.H>
 #include <string>
-#include <list>
-
-#include "fltk/Fl_Suggestion_Input.h"
 
 class Fl_Widget;
+class Fl_Input;
 class Fl_Input_Choice;
+class Fl_Tree;
+class Fl_Tree_Item;
 
 class ServerDialog : public Fl_Window {
 protected:
@@ -43,18 +43,25 @@ protected:
   static void handleAbout(Fl_Widget *widget, void *data);
   static void handleCancel(Fl_Widget *widget, void *data);
   static void handleConnect(Fl_Widget *widget, void *data);
+  static void handleFilter(Fl_Widget *widget, void *data);
+  static void handleSession(Fl_Widget *widget, void *data);
 
 private:
-  void loadServerHistory();
-  void saveServerHistory();
   void updateUsedDir(const char* filename);
-
-  static void onServerHistoryRemove(Fl_Widget*, std::string s, void* data);
-  static std::string serverHistoryNormalize(const std::string s);
+  void loadSessions(const std::string& subdir = "");
+  bool loadSession(Fl_Tree_Item* item);
+  void sessionMenu(Fl_Tree_Item* item);
+  void moveSession(const Fl_Tree_Item* item, const Fl_Tree_Item* target);
+  void newFolder(const Fl_Tree_Item* folder);
+  void renameFolder(const Fl_Tree_Item* folder);
+  void editSession(const Fl_Tree_Item* folder, const Fl_Tree_Item* item);
 
 protected:
-  Fl_Suggestion_Input *serverName;
-  std::list<std::string> serverHistory;
+  Fl_Input *filter;
+  Fl_Tree *sessions;
+  std::string sessionsDir;
+  // Server of the selected session, what Connect connects to
+  std::string serverName;
   std::string usedDir;
 };
 

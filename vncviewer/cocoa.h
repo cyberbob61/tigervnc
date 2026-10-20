@@ -19,6 +19,8 @@
 #ifndef __VNCVIEWER_COCOA_H__
 #define __VNCVIEWER_COCOA_H__
 
+#include <string>
+
 class Fl_Window;
 
 void cocoa_prevent_native_fullscreen(Fl_Window *win);
@@ -38,5 +40,10 @@ void cocoa_enable_minimize(Fl_Window *win);
 void cocoa_event_delay(double seconds);
 
 void cocoa_set_cursor_pos(int x, int y);
+
+bool cocoa_get_login(const char* service, std::string* user,
+                     std::string* password);
+bool cocoa_set_login(const char* service, const char* user,
+                     const char* password);
 
 #endif

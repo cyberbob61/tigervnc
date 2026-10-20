@@ -914,20 +914,16 @@ void CConnection::sendKeyPress(int systemKeyCode,
   }
 
 #ifdef __APPLE__
-  // Alt on OS X behaves more like AltGr on other systems, and to get
-  // sane behaviour we should translate things in that manner for the
-  // remote VNC server. However that means we lose the ability to use
-  // Alt as a shortcut modifier. Do what RealVNC does and hijack the
-  // left command key as an Alt replacement.
+  // Left Cmd acts as Ctrl, like Microsoft's Remote Desktop does, so
+  // Cmd+C/Cmd+V copy and paste remotely. Left Option stays Alt and
+  // right Option becomes AltGr for composed characters.
   switch (keySym) {
   case XK_Super_L:
-    keySym = XK_Alt_L;
+    keySym = XK_Control_L;
+    keyCode = 0x1d;
     break;
   case XK_Super_R:
     keySym = XK_Super_L;
-    break;
-  case XK_Alt_L:
-    keySym = XK_Mode_switch;
     break;
   case XK_Alt_R:
     keySym = XK_ISO_Level3_Shift;

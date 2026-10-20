@@ -86,6 +86,7 @@ elseif(APPLE)
   target_link_libraries(vncviewer PRIVATE "-framework Cocoa")
   target_link_libraries(vncviewer PRIVATE "-framework Carbon")
   target_link_libraries(vncviewer PRIVATE "-framework IOKit")
+  target_link_libraries(vncviewer PRIVATE "-framework Security")
 else()
   target_include_directories(vncviewer SYSTEM PUBLIC ${X11_INCLUDE_DIR})
 

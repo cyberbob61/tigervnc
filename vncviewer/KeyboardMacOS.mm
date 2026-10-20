@@ -194,7 +194,11 @@ bool KeyboardMacOS::handleEvent(const void* event)
     if ([nsevent modifierFlags] & NSAlternateKeyMask)
       modifiers |= optionKey;
 
-    keySym = translateToKeySym([nsevent keyCode], modifiers);
+    // Shortcuts follow the Latin layout, as Cmd shortcuts do in macOS
+    // itself, so Cmd+V stays Ctrl+V even with a Russian layout active
+    keySym = translateToKeySym([nsevent keyCode], modifiers,
+                               [nsevent modifierFlags] &
+                               (NSCommandKeyMask | NSControlKeyMask));
     if (keySym == NoSymbol) {
       vlog.error(_("No symbol for key code %d (in the current state)"),
                  systemKeyCode);
@@ -402,7 +406,8 @@ uint32_t KeyboardMacOS::translateSystemKeyCode(int systemKeyCode)
 }
 
 uint32_t KeyboardMacOS::translateToKeySym(unsigned keyCode,
-                                          unsigned modifierFlags)
+                                          unsigned modifierFlags,
+                                          bool latin)
 {
   const UCKeyboardLayout *layout;
   OSStatus err;
@@ -421,7 +426,10 @@ uint32_t KeyboardMacOS::translateToKeySym(unsigned keyCode,
       return kvk_map[i][1];
   }
 
-  keyboard = TISCopyCurrentKeyboardLayoutInputSource();
+  if (latin)
+    keyboard = TISCopyCurrentASCIICapableKeyboardLayoutInputSource();
+  else
+    keyboard = TISCopyCurrentKeyboardLayoutInputSource();
   uchr = (CFDataRef)TISGetInputSourceProperty(keyboard,
                                               kTISPropertyUnicodeKeyLayoutData);
   if (uchr == nullptr)

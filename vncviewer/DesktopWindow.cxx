@@ -290,48 +290,44 @@ DesktopWindow::~DesktopWindow()
 
 void DesktopWindow::updateCaption()
 {
-  const size_t maxLen = 100;
-  std::string windowName;
-  const char *labelFormat;
-  size_t maxNameSize;
-  std::string name;
+  std::string host, user, caption;
+  size_t paren;
+  int X, Y, W, H;
 
-  // FIXME: All of this consideres bytes, not characters
+  // Servers usually name the desktop "host:display (user)"
+  host = cc->server.name();
+  paren = host.find(" (");
+  if ((paren != std::string::npos) && (host.back() == ')')) {
+    user = host.substr(paren + 2, host.size() - paren - 3);
+    host.resize(paren);
+  } else if (getenv("VNC_USERNAME") != nullptr) {
+    user = getenv("VNC_USERNAME");
+  }
+  host = host.substr(0, host.find(':'));
 
-  if (keyboardGrabbed)
-    labelFormat = _("%s - TigerVNC (keyboard grabbed)");
-  else
-    labelFormat = _("%s - TigerVNC");
+  // The monitor the window is mostly on
+  Fl::screen_xywh(X, Y, W, H, x() + w() / 2, y() + h() / 2);
 
-  // Ignore the length of '%s' since it is
-  // a format marker which won't take up space
-  maxNameSize = maxLen - strlen(labelFormat) + 2;
-
-  name = cc->server.name();
-
-  if (name.size() > maxNameSize) {
-    if (maxNameSize <= strlen("...")) {
-      // Even an ellipsis won't fit
-      name.clear();
-    }
-    else {
-      int offset;
-
-      // We need to truncate, add an ellipsis
-      offset = maxNameSize - strlen("...");
-      name.resize(offset);
-      name += "...";
-    }
+  const std::pair<const char*, std::string> fields[] = {
+    { "remote_ip/port", cc->serverAddress() },
+    { "hostname", host },
+    { "username", user },
+    { "local_display", core::format("%dx%d", W, H) },
+    { "remote_display", core::format("%dx%d", cc->server.width(),
+                                     cc->server.height()) },
+  };
+  for (const auto& field : fields) {
+    if (field.second.empty())
+      continue;
+    if (!caption.empty())
+      caption += " | ";
+    caption += std::string(field.first) + ": " + field.second;
   }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+  if (keyboardGrabbed)
+    caption += _(" (keyboard grabbed)");
 
-  windowName = core::format(labelFormat, name.c_str());
-
-#pragma GCC diagnostic pop
-
-  copy_label(windowName.c_str());
+  copy_label(caption.c_str());
 }
 
 
@@ -381,6 +377,7 @@ void DesktopWindow::resizeFramebuffer(int new_w, int new_h)
   viewport->size(new_w, new_h);
 
   repositionWidgets();
+  updateCaption();
 }
 
 
@@ -668,11 +665,13 @@ void DesktopWindow::resize(int x, int y, int w, int h)
     // We might be overlapping a different set of monitors now, even if
     // our size is the same
     remoteResize();
+    updateCaption();
   }
   if (resizing) {
     remoteResize();
 
     repositionWidgets();
+    updateCaption();
   }
 }
 

@@ -252,6 +252,11 @@ std::string CConn::connectionInfo()
   return infoText;
 }
 
+std::string CConn::serverAddress()
+{
+  return core::format("%s:%d", serverHost.c_str(), serverPort);
+}
+
 unsigned CConn::getUpdateCount()
 {
   return updateCount;
@@ -773,25 +778,10 @@ bool CConn::verifyCertificate(unsigned int status,
 #endif
 }
 
-bool CConn::verifyHostKey(const uint8_t* key, size_t length,
-                          const char* fingerprint)
+bool CConn::verifyHostKey(const uint8_t* /*key*/, size_t /*length*/,
+                          const char* /*fingerprint*/)
 {
-  std::string text = core::format(
-    _("The server has provided the following identifying information:\n"
-      "\n"
-      "Fingerprint: %s\n"
-      "\n"
-      "Do you want to continue connecting to this server?"),
-    fingerprint);
-  fl_message_title(_("Verify server key"));
-  if (fl_choice("%s", nullptr, fl_cancel, _("Continue"),
-                fltk_escape(text).c_str()) != 2)
-    return false;
-
-  // FIXME: Should save this for TOFU
-  (void)key;
-  (void)length;
-
+  // Internal network only: accept any server key without asking
   return true;
 }
 

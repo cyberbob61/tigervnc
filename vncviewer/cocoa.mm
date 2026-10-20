@@ -28,6 +28,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <ApplicationServices/ApplicationServices.h>
+#import <Security/Security.h>
 
 #include "cocoa.h"
 
@@ -269,4 +270,51 @@ void cocoa_set_cursor_pos(int x, int y)
   new_pos.x = x;
   new_pos.y = y;
   CGWarpMouseCursorPosition(new_pos);
+}
+
+// Generic password items, the same kind `security add-generic-password` makes
+bool cocoa_get_login(const char* service, std::string* user,
+                     std::string* password)
+{
+  @autoreleasepool {
+    NSDictionary* query = @{
+      (id)kSecClass: (id)kSecClassGenericPassword,
+      (id)kSecAttrService: @(service),
+      (id)kSecReturnAttributes: @YES,
+      (id)kSecReturnData: @YES,
+    };
+    CFTypeRef result = nullptr;
+
+    if (SecItemCopyMatching((CFDictionaryRef)query, &result) != errSecSuccess)
+      return false;
+
+    NSDictionary* item = (NSDictionary*)result;
+    NSString* account = item[(id)kSecAttrAccount];
+    NSData* data = item[(id)kSecValueData];
+
+    *user = account ? account.UTF8String : "";
+    *password = std::string((const char*)data.bytes, data.length);
+
+    CFRelease(result);
+    return true;
+  }
+}
+
+bool cocoa_set_login(const char* service, const char* user,
+                     const char* password)
+{
+  @autoreleasepool {
+    NSDictionary* query = @{
+      (id)kSecClass: (id)kSecClassGenericPassword,
+      (id)kSecAttrService: @(service),
+    };
+    NSMutableDictionary* item = [[query mutableCopy] autorelease];
+
+    item[(id)kSecAttrAccount] = @(user);
+    item[(id)kSecValueData] = [NSData dataWithBytes:password
+                                             length:strlen(password)];
+
+    SecItemDelete((CFDictionaryRef)query);
+    return SecItemAdd((CFDictionaryRef)item, nullptr) == errSecSuccess;
+  }
 }
